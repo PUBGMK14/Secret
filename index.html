@@ -14,7 +14,9 @@
     form { display: grid; gap: 10px; }
     input, button { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
     .primary { background: #1f6feb; color: #fff; border: none; }
+    .google { background: #fff; color: #222; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .msg { font-size: 13px; color: #d00; min-height: 18px; }
+    .hint { font-size: 12px; color: #666; }
     .hidden { display: none; }
   </style>
 </head>
@@ -32,7 +34,15 @@
         <input id="loginEmail" type="email" inputmode="email" placeholder="이메일" autocomplete="username" required />
         <input id="loginPw" type="password" placeholder="비밀번호" autocomplete="current-password" required />
         <button id="loginBtn" class="primary" type="submit">로그인</button>
+        <button id="googleBtn" class="google" type="button" aria-label="Google로 계속">
+          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.7 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10 0 18.4-7.3 19.8-16.8.1-.8.2-1.6.2-2.7 0-1.1-.1-2.1-.4-3z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16.4 19 14 24 14c3 0 5.7 1.1 7.7 3l5.7-5.7C34 6.1 29.3 4 24 4c-7.8 0-14.5 4.4-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.1C29.4 35.9 26.9 37 24 37c-5.2 0-9.6-3.3-11.2-8l-6.6 5C8.3 40 15.6 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.3 4-5.7 8-11.3 8-5.2 0-9.6-3.3-11.2-8l-6.6 5C8.3 40 15.6 44 24 44c10 0 18.4-7.3 19.8-16.8.1-.8.2-1.6.2-2.7 0-1.1-.1-2.1-.4-3z"/></svg>
+          Google로 계속
+        </button>
         <div id="loginMsg" class="msg"></div>
+        <div id="verifyBox" class="hidden">
+          <div class="hint">이메일 인증 후 다시 로그인해 주세요.</div>
+          <button id="resendBtn" type="button">인증 메일 다시 보내기</button>
+        </div>
       </form>
     </div>
 
@@ -42,6 +52,7 @@
         <input id="signupPw" type="password" placeholder="비밀번호(6자 이상 권장)" required />
         <button id="signupBtn" class="primary" type="submit">회원가입</button>
         <div id="signupMsg" class="msg"></div>
+        <div class="hint">회원가입 후 인증 메일을 확인하셔야 입장할 수 있어요.</div>
       </form>
     </div>
   </div>
@@ -49,25 +60,24 @@
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // Firebase 구성: 정훈님 프로젝트 값으로 반영
+    // Firebase 구성
     const firebaseConfig = {
       apiKey: "AIzaSyCvou9yb-45tI_hdXxUF0_0SSRapvSF080",
       authDomain: "login-1414.firebaseapp.com",
       projectId: "login-1414"
-      // storageBucket 등은 현재 필요 없어서 생략
     };
 
-    // 로그인/회원가입 성공 시 이동할 주소
+    // 로그인/회원가입 성공 후 이동할 주소
     const REDIRECT_URL = "https://pubgmk14.github.io/Secret/";
 
     // 초기화
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    // 선택: 오프라인 캐시(실패해도 무시 가능)
-    db.enablePersistence().catch(() => {});
     const auth = firebase.auth();
+    const db = firebase.firestore();
+    db.enablePersistence().catch(() => {});
 
     // DOM
     const $ = (id) => document.getElementById(id);
@@ -80,6 +90,9 @@
     const loginEmail = $("loginEmail");
     const loginPw = $("loginPw");
     const loginMsg = $("loginMsg");
+    const verifyBox = $("verifyBox");
+    const resendBtn = $("resendBtn");
+    const googleBtn = $("googleBtn");
     const signupForm = $("signupForm");
     const signupBtn = $("signupBtn");
     const signupEmail = $("signupEmail");
@@ -93,6 +106,7 @@
       tabLogin.classList.add("active");
       tabSignup.classList.remove("active");
       loginMsg.textContent = "";
+      verifyBox.classList.add("hidden");
     }
     function showSignup() {
       signupView.classList.remove("hidden");
@@ -114,18 +128,22 @@
       if (code.includes("auth/invalid-credential")) return "이메일 또는 비밀번호가 올바르지 않습니다.";
       if (code.includes("auth/user-not-found")) return "가입되지 않은 이메일입니다.";
       if (code.includes("auth/wrong-password")) return "비밀번호가 올바르지 않습니다.";
+      if (code.includes("auth/popup-closed-by-user")) return "팝업이 닫혔습니다. 다시 시도해 주세요.";
+      if (code.includes("auth/cancelled-popup-request")) return "이전 팝업 작업이 취소되었습니다. 다시 시도해 주세요.";
       return "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
     }
 
-    // 로그인
+    // 이메일/비밀번호 로그인
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       loginBtn.disabled = true;
       loginMsg.textContent = "";
+      verifyBox.classList.add("hidden");
       try {
         const email = loginEmail.value.trim();
         const pw = loginPw.value;
         await auth.signInWithEmailAndPassword(email, pw);
+        // 상태 변화에서 처리
       } catch (err) {
         loginMsg.textContent = toMessage(err);
       } finally {
@@ -133,7 +151,23 @@
       }
     });
 
-    // 회원가입(가입 후 자동 로그인)
+    // 구글 로그인
+    googleBtn.addEventListener("click", async () => {
+      googleBtn.disabled = true;
+      loginMsg.textContent = "";
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        await auth.signInWithPopup(provider);
+        // 상태 변화에서 처리
+      } catch (err) {
+        loginMsg.textContent = toMessage(err);
+      } finally {
+        googleBtn.disabled = false;
+      }
+    });
+
+    // 회원가입(이메일 인증 필수)
     signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       signupBtn.disabled = true;
@@ -141,17 +175,80 @@
       try {
         const email = signupEmail.value.trim();
         const pw = signupPw.value;
-        await auth.createUserWithEmailAndPassword(email, pw);
+        const cred = await auth.createUserWithEmailAndPassword(email, pw);
+
+        // 인증 메일 발송
+        await cred.user.sendEmailVerification();
+        signupMsg.style.color = "#0a0";
+        signupMsg.textContent = "인증 메일을 보냈습니다. 메일함에서 인증 후 로그인해 주세요.";
+
+        // 편의를 위해 로그아웃하고 로그인 탭으로 전환
+        await auth.signOut();
+        showLogin();
+        loginEmail.value = email;
+        loginPw.value = "";
       } catch (err) {
+        signupMsg.style.color = "#d00";
         signupMsg.textContent = toMessage(err);
       } finally {
         signupBtn.disabled = false;
       }
     });
 
-    // 로그인 상태 변화 시 이동
-    auth.onAuthStateChanged((user) => {
-      if (user) {
+    // 인증 메일 재발송
+    resendBtn.addEventListener("click", async () => {
+      resendBtn.disabled = true;
+      loginMsg.textContent = "";
+      try {
+        const user = auth.currentUser;
+        if (user && !user.emailVerified) {
+          await user.sendEmailVerification();
+          loginMsg.style.color = "#0a0";
+          loginMsg.textContent = "인증 메일을 다시 보냈습니다. 메일함을 확인해 주세요.";
+        } else {
+          loginMsg.textContent = "재발송에 실패했습니다. 다시 로그인해 주세요.";
+        }
+      } catch (err) {
+        loginMsg.style.color = "#d00";
+        loginMsg.textContent = toMessage(err);
+      } finally {
+        resendBtn.disabled = false;
+      }
+    });
+
+    // 로그인 상태 변화 처리
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) return;
+
+      // 이메일/비번 사용자는 이메일 인증 필수, 구글은 바로 통과
+      const isGoogle = (user.providerData || []).some(p => p.providerId === "google.com");
+      try { await user.reload(); } catch {}
+      const verified = user.emailVerified || isGoogle;
+
+      if (!verified) {
+        loginMsg.style.color = "#d00";
+        loginMsg.textContent = "이메일 인증이 필요합니다. 메일함을 확인해 주세요.";
+        verifyBox.classList.remove("hidden");
+        return;
+      }
+
+      // Firestore에 사용자 문서 보장
+      try {
+        const userRef = db.collection("users").doc(user.uid);
+        const snap = await userRef.get();
+        if (!snap.exists) {
+          await userRef.set({
+            email: user.email,
+            provider: isGoogle ? "google" : "password",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+      } catch (e) {
+        console.warn("users 문서 생성 실패:", e);
+      }
+
+      // 동일 주소면 무한 새로고침 방지
+      if (location.href !== REDIRECT_URL) {
         location.replace(REDIRECT_URL);
       }
     });
