@@ -64,6 +64,9 @@
 
     // 초기화
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    // 선택: 오프라인 캐시(실패해도 무시 가능)
+    db.enablePersistence().catch(() => {});
     const auth = firebase.auth();
 
     // DOM
