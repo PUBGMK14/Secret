@@ -46,19 +46,21 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
   <script>
-    // Firebase 구성: 실제 값으로 교체하세요
+    // Firebase 구성: 정훈님 프로젝트 값으로 반영
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID"
+      apiKey: "AIzaSyCvou9yb-45tI_hdXxUF0_0SSRapvSF080",
+      authDomain: "login-1414.firebaseapp.com",
+      projectId: "login-1414"
+      // storageBucket 등은 현재 필요 없어서 생략
     };
 
-    const REDIRECT_URL = "https://naver.com";
+    // 로그인/회원가입 성공 시 이동할 주소
+    const REDIRECT_URL = "https://pubgmk14.github.io/Secret/";
 
     // 초기화
     firebase.initializeApp(firebaseConfig);
