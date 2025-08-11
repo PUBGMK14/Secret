@@ -3,75 +3,160 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>로그인</title>
+  <title>로그인 / 회원가입</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial; margin:0; padding:24px; }
-    .wrap { max-width: 360px; margin: 0 auto; }
+    .wrap { max-width: 380px; margin: 0 auto; }
     h1 { margin: 0 0 16px; font-size: 20px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tabs button { flex: 1; padding: 10px; font-size: 15px; border-radius: 8px; border: 1px solid #ccc; background: #f5f5f5; }
+    .tabs button.active { background: #1f6feb; color: #fff; border-color: #1f6feb; }
     form { display: grid; gap: 10px; }
     input, button { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
-    button { background: #1f6feb; color: #fff; border: none; }
-    button:disabled { opacity: 0.6; }
+    .primary { background: #1f6feb; color: #fff; border: none; }
+    .msg { font-size: 13px; color: #d00; min-height: 18px; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>로그인</h1>
-    <form id="loginForm" autocomplete="on" novalidate>
-      <input id="id" type="text" placeholder="아이디" autocomplete="username" required />
-      <input id="pw" type="password" placeholder="비밀번호" autocomplete="current-password" required />
-      <button id="loginBtn" type="submit">로그인</button>
-    </form>
+    <h1>로그인 / 회원가입</h1>
+
+    <div class="tabs">
+      <button id="tabLogin" class="active" type="button">로그인</button>
+      <button id="tabSignup" type="button">회원가입</button>
+    </div>
+
+    <div id="loginView">
+      <form id="loginForm" autocomplete="on" novalidate>
+        <input id="loginEmail" type="email" inputmode="email" placeholder="이메일" autocomplete="username" required />
+        <input id="loginPw" type="password" placeholder="비밀번호" autocomplete="current-password" required />
+        <button id="loginBtn" class="primary" type="submit">로그인</button>
+        <div id="loginMsg" class="msg"></div>
+      </form>
+    </div>
+
+    <div id="signupView" class="hidden">
+      <form id="signupForm" autocomplete="on" novalidate>
+        <input id="signupEmail" type="email" inputmode="email" placeholder="이메일" required />
+        <input id="signupPw" type="password" placeholder="비밀번호(6자 이상 권장)" required />
+        <button id="signupBtn" class="primary" type="submit">회원가입</button>
+        <div id="signupMsg" class="msg"></div>
+      </form>
+    </div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
   <script>
-    const USERS_URL = "./creds/users.json";
+    // Firebase 구성: 실제 값으로 교체하세요
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID"
+    };
+
     const REDIRECT_URL = "https://naver.com";
 
+    // 초기화
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // DOM
     const $ = (id) => document.getElementById(id);
-    const form = $("loginForm");
+    const tabLogin = $("tabLogin");
+    const tabSignup = $("tabSignup");
+    const loginView = $("loginView");
+    const signupView = $("signupView");
+    const loginForm = $("loginForm");
     const loginBtn = $("loginBtn");
+    const loginEmail = $("loginEmail");
+    const loginPw = $("loginPw");
+    const loginMsg = $("loginMsg");
+    const signupForm = $("signupForm");
+    const signupBtn = $("signupBtn");
+    const signupEmail = $("signupEmail");
+    const signupPw = $("signupPw");
+    const signupMsg = $("signupMsg");
 
-    let USERS = null;
+    // 탭 전환
+    function showLogin() {
+      loginView.classList.remove("hidden");
+      signupView.classList.add("hidden");
+      tabLogin.classList.add("active");
+      tabSignup.classList.remove("active");
+      loginMsg.textContent = "";
+    }
+    function showSignup() {
+      signupView.classList.remove("hidden");
+      loginView.classList.add("hidden");
+      tabSignup.classList.add("active");
+      tabLogin.classList.remove("active");
+      signupMsg.textContent = "";
+    }
+    tabLogin.addEventListener("click", showLogin);
+    tabSignup.addEventListener("click", showSignup);
 
-    async function loadUsers() {
-      try {
-        const q = "?t=" + Date.now();
-        const res = await fetch(USERS_URL + q, { cache: "no-store" });
-        if (!res.ok) throw new Error("users.json 로드 실패");
-        USERS = await res.json();
-      } catch (e) {
-        console.error(e);
-        alert("계정 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
-      }
+    // 에러 메시지
+    function toMessage(error) {
+      const code = error?.code || "";
+      if (code.includes("auth/invalid-email")) return "이메일 형식을 확인해 주세요.";
+      if (code.includes("auth/missing-password")) return "비밀번호를 입력해 주세요.";
+      if (code.includes("auth/weak-password")) return "비밀번호를 더 길게/복잡하게 설정해 주세요.";
+      if (code.includes("auth/email-already-in-use")) return "이미 가입된 이메일입니다.";
+      if (code.includes("auth/invalid-credential")) return "이메일 또는 비밀번호가 올바르지 않습니다.";
+      if (code.includes("auth/user-not-found")) return "가입되지 않은 이메일입니다.";
+      if (code.includes("auth/wrong-password")) return "비밀번호가 올바르지 않습니다.";
+      return "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
     }
 
-    function verify(id, pw) {
-      if (!Array.isArray(USERS)) return false;
-      return USERS.some(u => u.id === id && u.pw === pw);
-    }
-
-    form.addEventListener("submit", async (e) => {
+    // 로그인
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       loginBtn.disabled = true;
-
-      if (!USERS) {
-        await loadUsers();
-        if (!USERS) { loginBtn.disabled = false; return; }
+      loginMsg.textContent = "";
+      try {
+        const email = loginEmail.value.trim();
+        const pw = loginPw.value;
+        await auth.signInWithEmailAndPassword(email, pw);
+      } catch (err) {
+        loginMsg.textContent = toMessage(err);
+      } finally {
+        loginBtn.disabled = false;
       }
-
-      const id = $("id").value.trim();
-      const pw = $("pw").value;
-
-      if (verify(id, pw)) {
-        location.replace(REDIRECT_URL);
-      } else {
-        alert("아이디 또는 비밀번호가 틀렸습니다.");
-      }
-      loginBtn.disabled = false;
     });
 
-    loadUsers();
+    // 회원가입(가입 후 자동 로그인)
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      signupBtn.disabled = true;
+      signupMsg.textContent = "";
+      try {
+        const email = signupEmail.value.trim();
+        const pw = signupPw.value;
+        await auth.createUserWithEmailAndPassword(email, pw);
+      } catch (err) {
+        signupMsg.textContent = toMessage(err);
+      } finally {
+        signupBtn.disabled = false;
+      }
+    });
+
+    // 로그인 상태 변화 시 이동
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        location.replace(REDIRECT_URL);
+      }
+    });
+
+    // iOS 포커스 스크롤
+    [loginEmail, loginPw, signupEmail, signupPw].forEach((el) => {
+      el.addEventListener("focus", () => {
+        setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 120);
+      });
+    });
   </script>
 </body>
 </html>
