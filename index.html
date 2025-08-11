@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>로그인</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial; margin:0; padding:24px; }
@@ -11,6 +11,7 @@
     form { display: grid; gap: 10px; }
     input, button { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
     button { background: #1f6feb; color: #fff; border: none; }
+    button:disabled { opacity: 0.6; }
   </style>
 </head>
 <body>
@@ -19,30 +20,58 @@
     <form id="loginForm" autocomplete="on" novalidate>
       <input id="id" type="text" placeholder="아이디" autocomplete="username" required />
       <input id="pw" type="password" placeholder="비밀번호" autocomplete="current-password" required />
-      <button type="submit">로그인</button>
+      <button id="loginBtn" type="submit">로그인</button>
     </form>
   </div>
 
   <script>
-    // 아이디/비밀번호 설정 (필요 시 수정)
-    const USER_ID = "test";
-    const USER_PW = "1234";
+    const USERS_URL = "./creds/users.json";
     const REDIRECT_URL = "https://naver.com";
 
     const $ = (id) => document.getElementById(id);
     const form = $("loginForm");
+    const loginBtn = $("loginBtn");
 
-    form.addEventListener("submit", (e) => {
+    let USERS = null;
+
+    async function loadUsers() {
+      try {
+        const q = "?t=" + Date.now();
+        const res = await fetch(USERS_URL + q, { cache: "no-store" });
+        if (!res.ok) throw new Error("users.json 로드 실패");
+        USERS = await res.json();
+      } catch (e) {
+        console.error(e);
+        alert("계정 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      }
+    }
+
+    function verify(id, pw) {
+      if (!Array.isArray(USERS)) return false;
+      return USERS.some(u => u.id === id && u.pw === pw);
+    }
+
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      loginBtn.disabled = true;
+
+      if (!USERS) {
+        await loadUsers();
+        if (!USERS) { loginBtn.disabled = false; return; }
+      }
+
       const id = $("id").value.trim();
       const pw = $("pw").value;
-      if (id === USER_ID && pw === USER_PW) {
-        // 성공 시 네이버로 이동
+
+      if (verify(id, pw)) {
         location.replace(REDIRECT_URL);
       } else {
         alert("아이디 또는 비밀번호가 틀렸습니다.");
       }
+      loginBtn.disabled = false;
     });
+
+    loadUsers();
   </script>
 </body>
 </html>
