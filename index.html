@@ -3,264 +3,148 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>로그인 / 회원가입</title>
+  <title>소셜 로그인(구글/애플)</title>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial;
-      margin: 0;
-      padding: 24px;
-    }
-    .wrap {
-      max-width: 380px;
-      margin: 0 auto;
-    }
-    h1 {
-      margin: 0 0 16px;
-      font-size: 20px;
-    }
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .tabs button {
-      flex: 1;
-      padding: 10px;
-      font-size: 15px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      background: #f5f5f5;
-    }
-    .tabs button.active {
-      background: #1f6feb;
-      color: #fff;
-      border-color: #1f6feb;
-    }
-    form {
-      display: grid;
-      gap: 10px;
-    }
-    input, button {
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    .primary {
-      background: #1f6feb;
-      color: #fff;
-      border: none;
-    }
-    .google {
-      background: #fff;
-      color: #222;
-      border: 1px solid #ddd;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .msg {
-      font-size: 13px;
-      color: #d00;
-      min-height: 18px;
-    }
-    .hint {
-      font-size: 12px;
-      color: #666;
-    }
-    .hidden {
-      display: none;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial; margin:0; padding:24px; }
+    .wrap { max-width: 420px; margin: 0 auto; }
+    h1 { margin: 0 0 16px; font-size: 20px; }
+    .btn { width: 100%; padding: 12px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; background: #fff; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 8px 0; cursor: pointer; }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .google { border-color: #ddd; }
+    .apple  { background: #000; color: #fff; border-color: #000; }
+    .msg { min-height: 20px; font-size: 13px; color: #d00; margin-top: 10px; }
+    .hint { font-size: 12px; color: #666; margin-top: 12px; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>로그인 / 회원가입</h1>
+    <h1>로그인</h1>
 
-    <div class="tabs">
-      <button id="tabLogin" class="active" type="button">로그인</button>
-      <button id="tabSignup" type="button">회원가입</button>
-    </div>
+    <button id="googleBtn" class="btn google" type="button" aria-label="Google로 계속">
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.7 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10 0 18.4-7.3 19.8-16.8.1-.8.2-1.6.2-2.7 0-1.1-.1-2.1-.4-3z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16.4 19 14 24 14c3 0 5.7 1.1 7.7 3l5.7-5.7C34 6.1 29.3 4 24 4c-7.8 0-14.5 4.4-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.1C29.4 35.9 26.9 37 24 37c-5.2 0-9.6-3.3-11.2-8l-6.6 5C8.3 40 15.6 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.3 4-5.7 8-11.3 8-5.2 0-9.6-3.3-11.2-8l-6.6 5C8.3 40 15.6 44 24 44c10 0 18.4-7.3 19.8-16.8.1-.8.2-1.6.2-2.7 0-1.1-.1-2.1-.4-3z"/></svg>
+      Google로 계속
+    </button>
 
-    <div id="loginView">
-      <form id="loginForm" autocomplete="on" novalidate>
-        <input id="loginEmail" type="email" inputmode="email" placeholder="이메일" autocomplete="username" required />
-        <input id="loginPw" type="password" placeholder="비밀번호" autocomplete="current-password" required />
-        <button id="loginBtn" class="primary" type="submit">로그인</button>
-        <button id="googleBtn" class="google" type="button" aria-label="Google로 계속">
-          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.7 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10 0 18.4-7.3 19.8-16.8.1-.8.2-1.6.2-2.7 0-1.1-.1-2.1-.4-3z"/>
-            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16.4 19 14 24 14c3 0 5.7 1.1 7.7 3l5.7-5.7C34 6.1 29.3 4 24 4c-7.8 0-14.5 4.4-17.7 10.7z"/>
-            <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.1C29.4 35.9 26.9 37 24 37c-5.2 0-9.6-3.3-11.2-8l-6.6 5C8.3 40 15.6 44 24 44z"/>
-            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.3 4-5.7 8-11.3 8-5.2 0-9.6-3.3-11.2-8l-6.6 5C8.3 40 15.6 44 24 44c10 0 18.4-7.3 19.8-16.8.1-.8.2-1.6.2-2.7 0-1.1-.1-2.1-.4-3z"/>
-          </svg>
-          Google로 계속
-        </button>
-        <div id="loginMsg" class="msg"></div>
-      </form>
-    </div>
+    <button id="appleBtn" class="btn apple" type="button" aria-label="Apple로 계속">
+       Apple로 계속
+    </button>
 
-    <div id="signupView" class="hidden">
-      <form id="signupForm" autocomplete="on" novalidate>
-        <input id="signupEmail" type="email" inputmode="email" placeholder="이메일" required />
-        <input id="signupPw" type="password" placeholder="비밀번호(6자 이상 권장)" required />
-        <button id="signupBtn" class="primary" type="submit">회원가입</button>
-        <div id="signupMsg" class="msg"></div>
-        <div class="hint">회원가입 후 인증 메일을 확인하셔야 입장할 수 있어요.</div>
-      </form>
-    </div>
+    <div id="msg" class="msg"></div>
+    <div class="hint">팝업이 차단되면 자동으로 리다이렉트 방식으로 재시도합니다.</div>
   </div>
 
+  <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
+    // Firebase 구성
     const firebaseConfig = {
       apiKey: "AIzaSyCvou9yb-45tI_hdXxUF0_0SSRapvSF080",
       authDomain: "login-1414.firebaseapp.com",
       projectId: "login-1414"
     };
 
+    // 로그인 성공 후 이동할 주소
     const REDIRECT_URL = "https://pubgmk14.github.io/Secret/";
 
+    // 초기화
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
     db.enablePersistence().catch(() => {});
 
+    // DOM
     const $ = (id) => document.getElementById(id);
-    const tabLogin = $("tabLogin");
-    const tabSignup = $("tabSignup");
-    const loginView = $("loginView");
-    const signupView = $("signupView");
-    const loginForm = $("loginForm");
-    const loginBtn = $("loginBtn");
-    const loginEmail = $("loginEmail");
-    const loginPw = $("loginPw");
-    const loginMsg = $("loginMsg");
     const googleBtn = $("googleBtn");
-    const signupForm = $("signupForm");
-    const signupBtn = $("signupBtn");
-    const signupEmail = $("signupEmail");
-    const signupPw = $("signupPw");
-    const signupMsg = $("signupMsg");
+    const appleBtn  = $("appleBtn");
+    const msgEl = $("msg");
 
-    function showLogin() {
-      loginView.classList.remove("hidden");
-      signupView.classList.add("hidden");
-      tabLogin.classList.add("active");
-      tabSignup.classList.remove("active");
-      loginMsg.textContent = "";
-    }
-    function showSignup() {
-      signupView.classList.remove("hidden");
-      loginView.classList.add("hidden");
-      tabSignup.classList.add("active");
-      tabLogin.classList.remove("active");
-      signupMsg.textContent = "";
-    }
-    tabLogin.addEventListener("click", showLogin);
-    tabSignup.addEventListener("click", showSignup);
-
+    // 에러 메시지 변환
     function toMessage(error) {
       const code = error?.code || "";
-      if (code.includes("auth/invalid-email")) return "이메일 형식을 확인해 주세요.";
-      if (code.includes("auth/missing-password")) return "비밀번호를 입력해 주세요.";
-      if (code.includes("auth/weak-password")) return "비밀번호를 더 길게/복잡하게 설정해 주세요.";
-      if (code.includes("auth/email-already-in-use")) return "이미 가입된 이메일입니다.";
-      if (code.includes("auth/invalid-credential")) return "이메일 또는 비밀번호가 올바르지 않습니다.";
-      if (code.includes("auth/user-not-found")) return "가입되지 않은 이메일입니다.";
-      if (code.includes("auth/wrong-password")) return "비밀번호가 올바르지 않습니다.";
-      if (code.includes("auth/popup-closed-by-user")) return "팝업이 닫혔습니다. 다시 시도해 주세요.";
-      if (code.includes("auth/cancelled-popup-request")) return "이전 팝업 작업이 취소되었습니다. 다시 시도해 주세요.";
-      return "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+      if (code.includes("popup-closed-by-user")) return "팝업이 닫혔습니다. 다시 시도해 주세요.";
+      if (code.includes("cancelled-popup-request")) return "이전 로그인 시도가 취소되었습니다. 다시 시도해 주세요.";
+      if (code.includes("popup-blocked")) return "팝업이 차단되었습니다. 리다이렉트로 시도합니다.";
+      if (code.includes("operation-not-supported-in-this-environment")) return "현재 환경에서 팝업이 제한되어 있습니다. 리다이렉트로 시도합니다.";
+      if (code.includes("unauthorized-domain")) return "허용된 도메인이 아닙니다. 콘솔에서 도메인을 추가해야 합니다.";
+      return error?.message || "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.";
     }
 
-    loginForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      loginBtn.disabled = true;
-      loginMsg.textContent = "";
+    // 공통 로그인 처리: popup 우선, 실패 시 redirect 폴백
+    async function signInWithProvider(providerName) {
+      msgEl.textContent = "";
       try {
-        const email = loginEmail.value.trim();
-        const pw = loginPw.value;
-        await auth.signInWithEmailAndPassword(email, pw);
-      } catch (err) {
-        loginMsg.textContent = toMessage(err);
-      } finally {
-        loginBtn.disabled = false;
-      }
-    });
+        let provider;
+        if (providerName === "google") {
+          provider = new firebase.auth.GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: "select_account" });
+        } else if (providerName === "apple") {
+          provider = new firebase.auth.OAuthProvider("apple.com");
+          provider.addScope("email");
+          provider.addScope("name");
+          provider.setCustomParameters({ locale: "ko_KR" });
+        } else {
+          throw new Error("지원하지 않는 공급자입니다.");
+        }
 
-    googleBtn.addEventListener("click", async () => {
-      googleBtn.disabled = true;
-      loginMsg.textContent = "";
-      try {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: "select_account" });
         await auth.signInWithPopup(provider);
       } catch (err) {
-        loginMsg.textContent = toMessage(err);
-      } finally {
-        googleBtn.disabled = false;
+        const code = err?.code || "";
+        if (code.includes("popup-blocked") || code.includes("popup-closed-by-user") || code.includes("operation-not-supported")) {
+          try {
+            let provider;
+            if (providerName === "google") {
+              provider = new firebase.auth.GoogleAuthProvider();
+              provider.setCustomParameters({ prompt: "select_account" });
+            } else {
+              provider = new firebase.auth.OAuthProvider("apple.com");
+              provider.addScope("email");
+              provider.addScope("name");
+              provider.setCustomParameters({ locale: "ko_KR" });
+            }
+            await auth.signInWithRedirect(provider);
+            return; // redirect 진행
+          } catch (e2) {
+            msgEl.textContent = toMessage(e2);
+          }
+        } else {
+          msgEl.textContent = toMessage(err);
+        }
       }
+    }
+
+    // redirect 복귀 처리(필요 시 에러 표시)
+    auth.getRedirectResult().then(() => {}).catch((err) => {
+      msgEl.textContent = toMessage(err);
     });
 
-    signupForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      signupBtn.disabled = true;
-      signupMsg.textContent = "";
-      try {
-        const email = signupEmail.value.trim();
-        const pw = signupPw.value;
-        const cred = await auth.createUserWithEmailAndPassword(email, pw);
-        await cred.user.sendEmailVerification();
-        signupMsg.style.color = "#0a0";
-        signupMsg.textContent = "인증 메일을 보냈습니다. 메일함에서 인증 후 로그인해 주세요.";
-        await auth.signOut();
-        showLogin();
-        loginEmail.value = email;
-        loginPw.value = "";
-      } catch (err) {
-        signupMsg.style.color = "#d00";
-        signupMsg.textContent = toMessage(err);
-      } finally {
-        signupBtn.disabled = false;
-      }
-    });
+    // 이벤트
+    googleBtn.addEventListener("click", () => signInWithProvider("google"));
+    appleBtn.addEventListener("click",  () => signInWithProvider("apple"));
 
+    // 로그인 상태 변화: 사용자 문서 보장 후 리다이렉트
     auth.onAuthStateChanged(async (user) => {
       if (!user) return;
-
-      const isGoogle = (user.providerData || []).some(p => p.providerId === "google.com");
-      try {
-        await user.reload();
-      } catch {}
-
       try {
         const userRef = db.collection("users").doc(user.uid);
         const snap = await userRef.get();
         if (!snap.exists) {
+          const isGoogle = (user.providerData || []).some(p => p.providerId === "google.com");
+          const isApple  = (user.providerData || []).some(p => p.providerId === "apple.com");
           await userRef.set({
-            email: user.email,
-            provider: isGoogle ? "google" : "password",
+            email: user.email || null,
+            provider: isGoogle ? "google" : (isApple ? "apple" : "unknown"),
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           });
         }
       } catch (e) {
         console.warn("users 문서 생성 실패:", e);
       }
-
       if (location.href !== REDIRECT_URL) {
         location.replace(REDIRECT_URL);
       }
-    });
-
-    [loginEmail, loginPw, signupEmail, signupPw].forEach((el) => {
-      el.addEventListener("focus", () => {
-        setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 120);
-      });
     });
   </script>
 </body>
